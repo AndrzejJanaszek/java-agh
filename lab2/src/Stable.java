@@ -62,6 +62,10 @@ public class Stable {
 
     public boolean isEmpty() { return horseList.isEmpty(); }
 
+    public void printHotBloodedHorses(){
+        horseList.stream().filter(h -> h.getType() == HorseType.HOT_BLOODED).forEach(Horse::print);
+    }
+
     /* --- GETTERY & SETTER --- */
 
     public int getMaxCapacity() {
