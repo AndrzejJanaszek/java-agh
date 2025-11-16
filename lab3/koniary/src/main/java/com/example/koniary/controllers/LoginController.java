@@ -1,5 +1,6 @@
 package com.example.koniary.controllers;
 
+import com.example.koniary.Main;
 import com.example.koniary.SceneManager;
 import com.example.koniary.model.StableManager;
 import javafx.fxml.FXML;
@@ -14,7 +15,7 @@ public class LoginController {
     @FXML
     private PasswordField passwordField;
 
-    private final StableManager stableManager = new StableManager();
+    private final StableManager stableManager = Main.getStableManager();
 
     @FXML
     public void loginAsAdmin() {
@@ -27,7 +28,10 @@ public class LoginController {
 
     @FXML
     public void loginAsUser() {
-        System.out.println("Logowanie jako użytkownik...");
-        SceneManager.switchScene("user-view.fxml");
+        SceneManager.switchScene("user-view.fxml", controller -> {
+            if (controller instanceof UserController user) {
+                user.setStableManager(stableManager);
+            }
+        });
     }
 }

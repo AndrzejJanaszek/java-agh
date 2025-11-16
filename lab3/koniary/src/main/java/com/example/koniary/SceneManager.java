@@ -4,30 +4,36 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
 public class SceneManager {
 
-    private static Stage mainStage;
+    public static Stage mainStage;
 
-    public static void initialize(Stage stage) {
+    public static void init(Stage stage) {
         mainStage = stage;
     }
 
-    public static void switchScene(String fxmlName, java.util.function.Consumer<Object> controllerInit) {
+    public static void switchScene(String fxml, Consumer<Object> controllerSetup) {
         try {
-            FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(fxmlName));
+            FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(fxml));
             Scene scene = new Scene(loader.load());
 
             Object controller = loader.getController();
-            controllerInit.accept(controller);
+            if (controllerSetup != null) {
+                controllerSetup.accept(controller);
+            }
 
-            mainStage.setScene(scene);
+            mainStage.setScene(scene);  // <<< tutaj wcześniej było null
             mainStage.show();
-        } catch (Exception e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void switchScene(String fxmlName) {
-        switchScene(fxmlName, c -> {});
+    public static void switchScene(String fxml) {
+        switchScene(fxml, null);
     }
 }

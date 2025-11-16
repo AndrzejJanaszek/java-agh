@@ -2,10 +2,57 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      alignment="CENTER" spacing="10">
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.koniary.controllers.UserController">
 
-    <Label text="Panel Klienta" style="-fx-font-size: 24px;"/>
-</VBox>
+    <!-- LEWA KOLUMNA – LISTA STAJNI -->
+    <left>
+        <VBox spacing="10">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+
+            <Label text="Stables" style="-fx-font-size: 18px;" />
+
+            <TableView fx:id="stableTable" prefWidth="300">
+                <columns>
+                    <TableColumn fx:id="colStableName" text="Name" prefWidth="150"/>
+                    <TableColumn fx:id="colStableCapacity" text="Capacity" prefWidth="70"/>
+                    <TableColumn fx:id="colStableLoad" text="Load" prefWidth="70"/>
+                </columns>
+            </TableView>
+
+            <Button text="Contact Admin" onAction="#contactAdmin" />
+        </VBox>
+    </left>
+
+    <!-- PRAWA KOLUMNA – LISTA KONI -->
+    <center>
+        <VBox spacing="10">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+
+            <Label text="Horses" style="-fx-font-size: 18px;" />
+
+            <HBox spacing="10">
+                <TextField fx:id="filterField" promptText="Search by name" onAction="#filterHorses"/>
+                <ComboBox fx:id="conditionCombo" onAction="#filterHorses"/>
+                <Button text="Sort by Price" onAction="#sortByPrice"/>
+                <Button text="Sort by Age" onAction="#sortByAge"/>
+            </HBox>
+
+            <TableView fx:id="horseTable">
+                <columns>
+                    <TableColumn fx:id="colHorseName" text="Name" prefWidth="120"/>
+                    <TableColumn fx:id="colHorseBreed" text="Breed" prefWidth="120"/>
+                    <TableColumn fx:id="colHorseAge" text="Age" prefWidth="60"/>
+                    <TableColumn fx:id="colHorseWeight" text="Weight" prefWidth="70"/>
+                    <TableColumn fx:id="colHorsePrice" text="Price" prefWidth="70"/>
+                    <TableColumn fx:id="colHorseStatus" text="Status" prefWidth="100"/>
+                </columns>
+            </TableView>
+
+        </VBox>
+    </center>
+
+</BorderPane>
