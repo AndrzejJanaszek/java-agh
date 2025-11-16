@@ -123,24 +123,29 @@ public class FigureUI {
             System.out.println("4) exit");
             System.out.print("Wybór: ");
 
-            choice = sc.nextInt();
-            switch (choice) {
-                case 1:
-                    this.chooseFigure();
-                    break;
-                case 2:
-                    this.inputFigureData();
-                    break;
-                case 3:
-                    this.printFigureData();
-                    break;
-                case 4:
-                    System.out.println("KONIEC PROGRAMU:");
-                    System.exit(0);
-                    break;
-                default:
-                    System.out.println("Niepoprawny znak.\nPodaj liczbę całkowitą od 1 do 4\n");
-                    break;
+            try {
+                choice = sc.nextInt();
+                switch (choice) {
+                    case 1:
+                        this.chooseFigure();
+                        break;
+                    case 2:
+                        this.inputFigureData();
+                        break;
+                    case 3:
+                        this.printFigureData();
+                        break;
+                    case 4:
+                        System.out.println("KONIEC PROGRAMU:");
+                        System.exit(0);
+                        break;
+                    default:
+                        System.out.println("Niepoprawny znak.\nPodaj liczbę całkowitą od 1 do 4\n");
+                        break;
+                }
+            }catch (Exception e){
+                System.out.println("[BŁĄD:]");
+                System.out.println(e.getMessage());
             }
 
             this.waitForEnter();

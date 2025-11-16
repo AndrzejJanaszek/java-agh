@@ -37,9 +37,14 @@ public class Main {
         s1.addHorse(new Horse("Kage", "Mochizuke", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 37, 2222, 512));
         s1.summary();
         System.out.println("\n### PO USUNIECIU KONIA ### ");
-        s1.removeHorse(s1.getHorseList().get(1));
+//        s1.removeHorse(s1.getHorseList().get(1));
         s1.summary();
 
+        System.out.println();
+        s1.max().print();
+
+        System.out.println("----------------------");
+        s1.printHotBloodedHorses();
 
     }
 }
