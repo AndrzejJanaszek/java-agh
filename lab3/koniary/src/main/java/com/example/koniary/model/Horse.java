@@ -1,5 +1,7 @@
 package com.example.koniary.model;
 
+import com.example.koniary.exceptions.InvalidHorseDataException;
+
 public class Horse implements Comparable<Horse> {
     private String name;
     private String breed;
@@ -9,15 +11,24 @@ public class Horse implements Comparable<Horse> {
     private double price;
     private double weight;
 
-    public Horse(String name, String breed, HorseType type, HorseCondition status, int age, double price, double weight) {
+    public Horse(String name, String breed, HorseType type, HorseCondition condition,
+                 int age, double price, double weight) throws InvalidHorseDataException {
+
+        if (age < 0) throw new InvalidHorseDataException("Wiek nie może być ujemny!");
+        if (price < 0) throw new InvalidHorseDataException("Cena nie może być ujemna!");
+        if (weight <= 0) throw new InvalidHorseDataException("Waga musi być > 0!");
+        if (name == null || name.isBlank())
+            throw new InvalidHorseDataException("Koń musi mieć imię!");
+
         this.name = name;
         this.breed = breed;
         this.type = type;
-        this.status = status;
+        this.status = condition; // <============================== POPRAWKA
         this.age = age;
         this.price = price;
         this.weight = weight;
     }
+
 
     public void print() {
         System.out.printf("%s (%s, %s) - %d lat, %.2f zł, %.1f kg, status: %s%n",

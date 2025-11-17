@@ -1,5 +1,6 @@
 package com.example.koniary.model;
 
+import com.example.koniary.exceptions.InvalidHorseDataException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -7,8 +8,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class HorseTest {
 
     @Test
-    void testConstructorAndGetters() {
-        Horse h = new Horse("Płotka", "Temerian", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 7, 5000, 450);
+    void testConstructorAndGetters() throws InvalidHorseDataException {
+        Horse h = new Horse("Płotka", "Temerian", HorseType.COLD_BLOODED,
+                HorseCondition.HEALTHY, 7, 5000, 450);
 
         assertEquals("Płotka", h.getName());
         assertEquals("Temerian", h.getBreed());
@@ -20,8 +22,9 @@ public class HorseTest {
     }
 
     @Test
-    void testSetters() {
-        Horse h = new Horse("A", "B", HorseType.HOT_BLOODED, HorseCondition.SICK, 3, 1000, 200);
+    void testSetters() throws InvalidHorseDataException {
+        Horse h = new Horse("A", "B", HorseType.HOT_BLOODED,
+                HorseCondition.SICK, 3, 1000, 200);
 
         h.setName("Nowe");
         h.setBreed("Rasa");
@@ -41,9 +44,11 @@ public class HorseTest {
     }
 
     @Test
-    void testCompareTo() {
-        Horse h1 = new Horse("Anna", "Arabian", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 4, 1000, 400);
-        Horse h2 = new Horse("Bartek", "Mustang", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 5, 2000, 500);
+    void testCompareTo() throws InvalidHorseDataException {
+        Horse h1 = new Horse("Anna", "Arabian", HorseType.HOT_BLOODED,
+                HorseCondition.HEALTHY, 4, 1000, 400);
+        Horse h2 = new Horse("Bartek", "Mustang", HorseType.HOT_BLOODED,
+                HorseCondition.HEALTHY, 5, 2000, 500);
 
         assertTrue(h1.compareTo(h2) < 0);
     }

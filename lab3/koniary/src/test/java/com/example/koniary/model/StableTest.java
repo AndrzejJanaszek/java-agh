@@ -1,5 +1,8 @@
 package com.example.koniary.model;
 
+import com.example.koniary.exceptions.HorseAlreadyExistsException;
+import com.example.koniary.exceptions.InvalidHorseDataException;
+import com.example.koniary.exceptions.StableFullException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,37 +20,40 @@ public class StableTest {
     }
 
     @Test
-    void testAddHorse() {
+    void testAddHorse() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         Horse h = new Horse("A", "B", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 3, 1000, 400);
+
         stable.addHorse(h);
 
         assertEquals(1, stable.getHorseList().size());
     }
 
     @Test
-    void testAddHorseDuplicate() {
+    void testAddHorseDuplicate() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         Horse h = new Horse("A", "B", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 5, 2000, 500);
 
         stable.addHorse(h);
-        stable.addHorse(h);  // drugi raz
+        stable.addHorse(h);  // drugi raz - powinno być zignorowane
 
         assertEquals(1, stable.getHorseList().size());
     }
 
     @Test
-    void testAddHorseCapacityExceeded() {
+    void testAddHorseCapacityExceeded() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         stable.addHorse(new Horse("1","A",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1));
         stable.addHorse(new Horse("2","A",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1));
         stable.addHorse(new Horse("3","A",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1));
 
-        // to już ponad pojemność
-        stable.addHorse(new Horse("4","A",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1));
+        // ponad pojemność — powinno rzucić wyjątek
+        assertThrows(StableFullException.class, () ->
+                stable.addHorse(new Horse("4","A",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1))
+        );
 
         assertEquals(3, stable.getHorseList().size());
     }
 
     @Test
-    void testRemoveHorse() {
+    void testRemoveHorse() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         Horse h = new Horse("A","B",HorseType.HOT_BLOODED,HorseCondition.HEALTHY,2,2000,350);
 
         stable.addHorse(h);
@@ -57,15 +63,16 @@ public class StableTest {
     }
 
     @Test
-    void testSearchExact() {
+    void testSearchExact() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         Horse h = new Horse("Płotka","Temerian",HorseType.COLD_BLOODED,HorseCondition.HEALTHY,7,5000,450);
+
         stable.addHorse(h);
 
         assertTrue(stable.search("Płotka").isPresent());
     }
 
     @Test
-    void testSearchPartial() {
+    void testSearchPartial() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         stable.addHorse(new Horse("Kasztanek","Winnica",HorseType.HOT_BLOODED,HorseCondition.HEALTHY,4,3000,350));
 
         List<Horse> results = stable.searchPartial("Kas");
@@ -73,7 +80,7 @@ public class StableTest {
     }
 
     @Test
-    void testSortByName() {
+    void testSortByName() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         stable.addHorse(new Horse("Zenek","B",HorseType.COLD_BLOODED,HorseCondition.HEALTHY,3,2000,300));
         stable.addHorse(new Horse("Adam","A",HorseType.COLD_BLOODED,HorseCondition.HEALTHY,3,2000,300));
 
@@ -83,7 +90,7 @@ public class StableTest {
     }
 
     @Test
-    void testCountByStatus() {
+    void testCountByStatus() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         stable.addHorse(new Horse("A","B",HorseType.COLD_BLOODED,HorseCondition.HEALTHY,1,1,1));
         stable.addHorse(new Horse("B","C",HorseType.COLD_BLOODED,HorseCondition.SICK,1,1,1));
 
@@ -91,9 +98,11 @@ public class StableTest {
     }
 
     @Test
-    void testIsEmpty() {
+    void testIsEmpty() throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
         assertTrue(stable.isEmpty());
+
         stable.addHorse(new Horse("A","B",HorseType.HOT_BLOODED,HorseCondition.HEALTHY,2,10,10));
+
         assertFalse(stable.isEmpty());
     }
 }

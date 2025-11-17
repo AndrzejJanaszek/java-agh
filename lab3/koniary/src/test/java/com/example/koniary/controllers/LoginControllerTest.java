@@ -1,12 +1,13 @@
 package com.example.koniary.controllers;
 
+import com.example.koniary.exceptions.StableAlreadyExistsException;
 import com.example.koniary.model.StableManager;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testuje tylko logikę – bez JavaFX, bez SceneManagera.
+ * Testuje logikę związaną z StableManager – bez JavaFX.
  */
 public class LoginControllerTest {
 
@@ -22,7 +23,11 @@ public class LoginControllerTest {
     void testAddingDefaultData() {
         StableManager manager = new StableManager();
 
-        manager.addStable("Test", 10);
+        try {
+            manager.addStable("Test", 10);
+        } catch (StableAlreadyExistsException e) {
+            fail("Stable should not already exist");
+        }
 
         assertEquals(1, manager.getStables().size());
         assertTrue(manager.search("Test").isPresent());

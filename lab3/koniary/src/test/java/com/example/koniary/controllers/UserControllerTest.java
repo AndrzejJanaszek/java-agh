@@ -1,5 +1,8 @@
 package com.example.koniary.controllers;
 
+import com.example.koniary.exceptions.HorseAlreadyExistsException;
+import com.example.koniary.exceptions.InvalidHorseDataException;
+import com.example.koniary.exceptions.StableFullException;
 import com.example.koniary.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,20 +11,24 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Testy jednostkowe logiki UserController – bez JavaFX.
- */
 public class UserControllerTest {
 
     private Stable stable;
 
     @BeforeEach
-    void setup() {
+    void setup()
+            throws InvalidHorseDataException, StableFullException, HorseAlreadyExistsException {
+
         stable = new Stable("UserStable", 10);
 
-        stable.addHorse(new Horse("Zebra", "Mix", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 3, 2000, 300));
-        stable.addHorse(new Horse("Alfa", "Mustang", HorseType.HOT_BLOODED, HorseCondition.SICK, 6, 5000, 450));
-        stable.addHorse(new Horse("Płotka", "Witcher", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 4, 3200, 410));
+        stable.addHorse(new Horse("Zebra", "Mix", HorseType.HOT_BLOODED,
+                HorseCondition.HEALTHY, 3, 2000, 300));
+
+        stable.addHorse(new Horse("Alfa", "Mustang", HorseType.HOT_BLOODED,
+                HorseCondition.SICK, 6, 5000, 450));
+
+        stable.addHorse(new Horse("Płotka", "Witcher", HorseType.COLD_BLOODED,
+                HorseCondition.HEALTHY, 4, 3200, 410));
     }
 
     @Test
@@ -52,7 +59,7 @@ public class UserControllerTest {
                 .filter(h -> h.getName().toLowerCase().contains("a"))
                 .toList();
 
-        assertEquals(3, filtered.size()); // bo wszystkie mają „a”
+        assertEquals(3, filtered.size());
     }
 
     @Test

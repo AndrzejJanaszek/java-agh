@@ -1,4 +1,7 @@
 package com.example.koniary.model;
+import com.example.koniary.exceptions.HorseAlreadyExistsException;
+import com.example.koniary.exceptions.StableFullException;
+
 import java.util.*;
 
 public class Stable {
@@ -12,17 +15,16 @@ public class Stable {
         this.horseList = new ArrayList<>();
     }
 
-    public void addHorse(Horse horse) {
+    public void addHorse(Horse horse) throws StableFullException {
         if (horseList.size() >= maxCapacity) {
-            System.err.println("Brak miejsca w stadninie!");
-            return;
+            throw new StableFullException("Brak miejsca w stajni " + stableName);
         }
-        if (horseList.stream().anyMatch(h -> h.equals(horse))) {
-            System.out.println("Taki koń już istnieje.");
-            return;
+        if (horseList.contains(horse)) {
+            return; // <============================== IGNORUJEMY DUPLIKAT
         }
         horseList.add(horse);
     }
+
 
     public void removeHorse(Horse horse) { horseList.remove(horse); }
 

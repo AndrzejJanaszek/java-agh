@@ -1,6 +1,7 @@
 package com.example.koniary.controllers;
 
 import com.example.koniary.model.*;
+import com.example.koniary.exceptions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testy jednostkowe LOGIKI AdminController – brak JavaFX.
+ * Testy LOGIKI modelu używanej przez AdminController.
+ * Brak JavaFX – testujemy tylko zachowanie Stable i Horse.
  */
 public class AdminControllerTest {
 
@@ -19,19 +21,45 @@ public class AdminControllerTest {
     @BeforeEach
     void setup() {
         manager = new StableManager();
-        manager.addStable("TestStable", 5);
+
+        // addStable wymaga obsługi wyjątku
+        try {
+            manager.addStable("TestStable", 5);
+        } catch (StableAlreadyExistsException e) {
+            fail("Stable should not exist yet");
+        }
 
         stable = manager.search("TestStable").orElseThrow();
-        stable.addHorse(new Horse("Max", "Arab", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 5, 3000, 400));
-        stable.addHorse(new Horse("Bella", "Fiord", HorseType.COLD_BLOODED, HorseCondition.SICK, 7, 2500, 450));
+
+        // addHorse wymaga obsługi 3 wyjątków
+        try {
+            stable.addHorse(new Horse("Max", "Arab",
+                    HorseType.HOT_BLOODED, HorseCondition.HEALTHY,
+                    5, 3000, 400));
+
+            stable.addHorse(new Horse("Bella", "Fiord",
+                    HorseType.COLD_BLOODED, HorseCondition.SICK,
+                    7, 2500, 450));
+
+        } catch (InvalidHorseDataException | StableFullException e ) {
+            fail("Horse initialization should not fail: " + e.getMessage());
+        }
     }
 
     @Test
     void testAddHorse() {
-        Horse h = new Horse("Płotka", "Witcher", HorseType.HOT_BLOODED,
-                HorseCondition.HEALTHY, 4, 5000, 480);
+        Horse h;
+        try {
+            h = new Horse("Płotka", "Witcher",
+                    HorseType.HOT_BLOODED, HorseCondition.HEALTHY,
+                    4, 5000, 480);
 
-        stable.addHorse(h);
+            stable.addHorse(h);
+
+        } catch (InvalidHorseDataException | StableFullException e) {
+            fail("Adding horse should not fail");
+            return;
+        }
 
         assertEquals(3, stable.getHorseList().size());
         assertTrue(stable.getHorseList().contains(h));
