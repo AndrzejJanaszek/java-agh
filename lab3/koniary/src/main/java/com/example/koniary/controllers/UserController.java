@@ -10,18 +10,19 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.util.converter.DoubleStringConverter;
+import javafx.util.converter.IntegerStringConverter;
 
 import java.util.Comparator;
 import java.util.List;
 
 public class UserController {
 
-    // === DAO zamiast StableManager ===
-    private final StableDAO stableDAO = new StableDAO(HibernateUtil.getEntityManagerFactory());
-    private final HorseDAO horseDAO = new HorseDAO(HibernateUtil.getEntityManagerFactory());
+    private StableDAO stableDAO = new StableDAO(HibernateUtil.getEntityManagerFactory());
+    private HorseDAO horseDAO = new HorseDAO(HibernateUtil.getEntityManagerFactory());
+    private RatingDAO ratingDAO = new RatingDAO(HibernateUtil.getEntityManagerFactory());
 
-    // TABLES
     @FXML private TableView<Stable> stableTable;
     @FXML private TableColumn<Stable, String> colStableName;
     @FXML private TableColumn<Stable, Integer> colStableCapacity;
@@ -35,20 +36,25 @@ public class UserController {
     @FXML private TableColumn<Horse, Double> colHorsePrice;
     @FXML private TableColumn<Horse, HorseCondition> colHorseStatus;
 
+    // NOWE
+    @FXML private TableColumn<Horse, Double> colRatingAvg;
+    @FXML private TableColumn<Horse, Integer> colRatingCount;
+
     @FXML private TextField filterField;
     @FXML private ComboBox<HorseCondition> conditionCombo;
 
     private final ObservableList<Stable> stables = FXCollections.observableArrayList();
     private final ObservableList<Horse> horses = FXCollections.observableArrayList();
 
-
     @FXML
     public void initialize() {
         setupStableTable();
         setupHorseTable();
         setupListeners();
+        loadData();
+    }
 
-        // Wczytanie danych z bazy
+    private void loadData() {
         stables.setAll(stableDAO.getAll());
     }
 
@@ -57,6 +63,7 @@ public class UserController {
                 new SimpleStringProperty(c.getValue().getStableName()));
         colStableCapacity.setCellValueFactory(c ->
                 new SimpleIntegerProperty(c.getValue().getMaxCapacity()).asObject());
+
         colStableLoad.setCellValueFactory(c ->
                 new SimpleIntegerProperty(c.getValue().getHorseList().size()).asObject());
 
@@ -65,18 +72,25 @@ public class UserController {
 
     private void setupHorseTable() {
 
-        colHorseName.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getName()));
-        colHorseBreed.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getBreed()));
-        colHorseAge.setCellValueFactory(c ->
-                new SimpleIntegerProperty(c.getValue().getAge()).asObject());
-        colHorseWeight.setCellValueFactory(c ->
-                new SimpleDoubleProperty(c.getValue().getWeight()).asObject());
-        colHorsePrice.setCellValueFactory(c ->
-                new SimpleDoubleProperty(c.getValue().getPrice()).asObject());
-        colHorseStatus.setCellValueFactory(c ->
-                new SimpleObjectProperty<>(c.getValue().getStatus()));
+        colHorseName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
+        colHorseBreed.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBreed()));
+        colHorseAge.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getAge()).asObject());
+        colHorseWeight.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().getWeight()).asObject());
+        colHorsePrice.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().getPrice()).asObject());
+        colHorseStatus.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getStatus()));
+
+        // NOWE — dynamiczne pobieranie ocen
+        colRatingAvg.setCellValueFactory(c ->
+                new SimpleDoubleProperty(
+                        ratingDAO.getAverageForHorse(c.getValue().getId())
+                ).asObject()
+        );
+
+        colRatingCount.setCellValueFactory(c ->
+                new SimpleIntegerProperty(
+                        ratingDAO.getRatingCountForHorse(c.getValue().getId()).intValue()
+                ).asObject()
+        );
 
         horseTable.setItems(horses);
         conditionCombo.setItems(FXCollections.observableArrayList(HorseCondition.values()));
@@ -131,35 +145,15 @@ public class UserController {
     }
 
     /* ======================
-       CONTACT ADMIN
+       ADD RATING
        ====================== */
 
     @FXML
-    public void contactAdmin() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Contact");
-        alert.setHeaderText("Contact the administrator");
-        alert.setContentText("Please email: admin@stable-system.com");
-        alert.showAndWait();
-    }
-
-    // =============================================
-    // ADD RATING
-    // =============================================
-
-    // Dodaj to pole w klasie UserController:
-    private final RatingDAO ratingDAO = new RatingDAO();
-
-    @FXML
     public void addRating() {
+        Horse horse = horseTable.getSelectionModel().getSelectedItem();
 
-        Horse selectedHorse = horseTable.getSelectionModel().getSelectedItem();
-        if (selectedHorse == null) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("No horse selected");
-            alert.setHeaderText(null);
-            alert.setContentText("Please select a horse to rate.");
-            alert.showAndWait();
+        if (horse == null) {
+            showError("Select a horse first.");
             return;
         }
 
@@ -168,35 +162,32 @@ public class UserController {
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new javafx.geometry.Insets(10));
+        TextField valueField = new TextField();
+        valueField.setPromptText("0–5");
 
-        TextField starsField = new TextField();
-        starsField.setPromptText("Stars (1–5)");
+        TextField descField = new TextField();
+        descField.setPromptText("Description");
 
-        TextArea commentField = new TextArea();
-        commentField.setPromptText("Comment");
-        commentField.setPrefRowCount(3);
-
-        grid.addRow(0, new Label("Stars:"), starsField);
-        grid.addRow(1, new Label("Comment:"), commentField);
-
-        dialog.getDialogPane().setContent(grid);
+        VBox vbox = new VBox(10, new Label("Rating:"), valueField,
+                new Label("Description:"), descField);
+        dialog.getDialogPane().setContent(vbox);
 
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK) {
                 try {
-                    int stars = Integer.parseInt(starsField.getText());
+                    int val = Integer.parseInt(valueField.getText());
+                    if (val < 0 || val > 5) throw new Exception();
 
-                    Rating rating = new Rating(stars, commentField.getText(), selectedHorse);
-                    return rating;
+                    Rating r = new Rating();
+                    r.setHorse(horse);
+                    r.setValue(val);
+                    r.setDescription(descField.getText());
+                    r.setDate(java.time.LocalDate.now());
+                    return r;
 
-                } catch (NumberFormatException e) {
-                    showError("Stars must be a number between 1 and 5.");
-                } catch (IllegalArgumentException e) {
-                    showError(e.getMessage());
+                } catch (Exception e) {
+                    showError("Invalid rating value.");
+                    return null;
                 }
             }
             return null;
@@ -207,60 +198,52 @@ public class UserController {
 
         ratingDAO.save(rating);
 
-        Alert success = new Alert(Alert.AlertType.INFORMATION);
-        success.setTitle("Rating added");
-        success.setHeaderText(null);
-        success.setContentText("Rating saved successfully!");
-        success.showAndWait();
+        horseTable.refresh();
     }
 
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
+    /* ======================
+       SHOW RATINGS
+       ====================== */
 
     @FXML
     public void showRatings() {
-
         Horse horse = horseTable.getSelectionModel().getSelectedItem();
+
         if (horse == null) {
             showError("Select a horse first.");
             return;
         }
 
-        // Pobieramy oceny z DB
-        List<Rating> ratings = ratingDAO.findByHorseId(horse.getId());
+        List<Rating> list = ratingDAO.getRatingsForHorse(horse.getId());
 
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Ratings for: " + horse.getName());
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        StringBuilder sb = new StringBuilder();
+        for (Rating r : list) {
+            sb.append("⭐ ").append(r.getValue()).append("  •  ")
+                    .append(r.getDate()).append("\n")
+                    .append(r.getDescription()).append("\n\n");
+        }
 
-        TableView<Rating> table = new TableView<>();
-        table.setPrefWidth(450);
-
-        TableColumn<Rating, Integer> colStars = new TableColumn<>("Stars");
-        colStars.setCellValueFactory(c -> new SimpleIntegerProperty(c.getValue().getStars()).asObject());
-        colStars.setPrefWidth(60);
-
-        TableColumn<Rating, String> colComment = new TableColumn<>("Comment");
-        colComment.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getComment()));
-        colComment.setPrefWidth(250);
-
-        TableColumn<Rating, String> colDate = new TableColumn<>("Date");
-        colDate.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getCreatedAt().toString())
-        );
-        colDate.setPrefWidth(140);
-
-        table.getColumns().addAll(colStars, colComment, colDate);
-        table.getItems().addAll(ratings);
-
-        dialog.getDialogPane().setContent(table);
-        dialog.showAndWait();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Ratings for " + horse.getName());
+        alert.setHeaderText(null);
+        alert.setContentText(sb.toString());
+        alert.showAndWait();
     }
 
+    private void showError(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+    @FXML
+    public void contactAdmin() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Contact");
+        alert.setHeaderText("Contact the administrator");
+        alert.setContentText("Please email: admin@stable-system.com");
+        alert.showAndWait();
+    }
 
 }

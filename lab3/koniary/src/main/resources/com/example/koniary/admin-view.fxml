@@ -66,4 +66,7 @@
         </VBox>
     </center>
 
+    <Button text="Save to .dat" onAction="#saveData"/>
+    <Button text="Load from .dat" onAction="#loadData"/>
+
 </BorderPane>

@@ -4,9 +4,15 @@ import com.example.koniary.HibernateUtil;
 import com.example.koniary.model.Rating;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.util.List;
 
 public class RatingDAO {
+    private final EntityManagerFactory emf;
+
+    public RatingDAO(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
 
     public void save(Rating rating) {
         EntityManager em = HibernateUtil.getEntityManagerFactory().createEntityManager();
@@ -56,4 +62,40 @@ public class RatingDAO {
         em.getTransaction().commit();
         em.close();
     }
+
+    public List<Rating> getRatingsForHorse(long horseId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery("SELECT r FROM Rating r WHERE r.horse.id = :id ORDER BY r.date DESC", Rating.class)
+                    .setParameter("id", horseId)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    public Double getAverageForHorse(long horseId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            Double result = em.createQuery("SELECT AVG(r.value) FROM Rating r WHERE r.horse.id = :id", Double.class)
+                    .setParameter("id", horseId)
+                    .getSingleResult();
+            return result == null ? 0.0 : result;
+        } finally {
+            em.close();
+        }
+    }
+
+    public Long getRatingCountForHorse(long horseId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            Long result = em.createQuery("SELECT COUNT(r) FROM Rating r WHERE r.horse.id = :id", Long.class)
+                    .setParameter("id", horseId)
+                    .getSingleResult();
+            return result;
+        } finally {
+            em.close();
+        }
+    }
+
 }

@@ -49,6 +49,10 @@
                     <TableColumn fx:id="colHorseWeight" text="Weight" prefWidth="70"/>
                     <TableColumn fx:id="colHorsePrice" text="Price" prefWidth="70"/>
                     <TableColumn fx:id="colHorseStatus" text="Status" prefWidth="100"/>
+
+                    <!-- NOWE KOLUMNY -->
+                    <TableColumn fx:id="colRatingAvg" text="Avg Rating" prefWidth="90"/>
+                    <TableColumn fx:id="colRatingCount" text="Ratings" prefWidth="70"/>
                 </columns>
             </TableView>
 

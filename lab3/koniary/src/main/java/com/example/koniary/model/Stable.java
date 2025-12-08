@@ -3,11 +3,13 @@ package com.example.koniary.model;
 import com.example.koniary.exceptions.StableFullException;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.*;
 
 @Entity
 @Table(name = "stables")
-public class Stable {
+public class Stable implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

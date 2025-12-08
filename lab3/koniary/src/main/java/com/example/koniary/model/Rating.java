@@ -1,67 +1,70 @@
 package com.example.koniary.model;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "ratings")
-public class Rating {
+public class Rating implements Serializable {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int stars; // np. 1–5
+    @Column(name = "rating_value")
+    private int value;
 
-    @Column(length = 500)
-    private String comment;
+    @Column(nullable = false)
+    private String description;
 
-    private LocalDateTime createdAt;
+    @Column(name = "rating_date")
+    private LocalDate date;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "horse_id")
     private Horse horse;
 
-    public Rating() {
-        // Wymagany przez Hibernate
-    }
+    public Rating() {}
 
-    public Rating(int stars, String comment, Horse horse) {
-        if (stars < 1 || stars > 5)
-            throw new IllegalArgumentException("Rating must be between 1 and 5 stars.");
-
-        this.stars = stars;
-        this.comment = comment;
+    public Rating(int value, String description, LocalDate date, Horse horse) {
+        this.value = value;
+        this.description = description;
+        this.date = date;
         this.horse = horse;
-        this.createdAt = LocalDateTime.now();
     }
 
-    // ======= GETTERY & SETTERY =======
+    // ======================
+    // GETTERY / SETTERY
+    // ======================
 
     public Long getId() {
         return id;
     }
 
-    public int getStars() {
-        return stars;
+    public int getValue() {
+        return value;
     }
 
-    public void setStars(int stars) {
-        if (stars < 1 || stars > 5)
-            throw new IllegalArgumentException("Rating must be between 1 and 5 stars.");
-        this.stars = stars;
+    public void setValue(int value) {
+        this.value = value;
     }
 
-    public String getComment() {
-        return comment;
+    public String getDescription() {
+        return description;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public Horse getHorse() {

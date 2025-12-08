@@ -4,6 +4,7 @@ import com.example.koniary.HibernateUtil;
 import com.example.koniary.exceptions.*;
 import com.example.koniary.model.*;
 import com.example.koniary.services.HorseDAO;
+import com.example.koniary.services.Serializer;
 import com.example.koniary.services.StableDAO;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -13,8 +14,10 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
+import javafx.stage.FileChooser;
 import javafx.util.converter.IntegerStringConverter;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.List;
 
@@ -440,4 +443,50 @@ public class AdminController {
         alert.setContentText(msg);
         alert.showAndWait();
     }
+
+    @FXML
+    public void saveData() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Save data");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Binary file", "*.dat"));
+
+        File file = fc.showSaveDialog(null);
+        if (file == null) return;
+
+        Serializer.saveToFile(stableDAO.getAll(), file);
+    }
+
+    private void refreshTables() {
+        stables.setAll(stableDAO.getAll());   // odśwież listę stajni
+
+        Stable selected = stableTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            horses.setAll(selected.getHorseList());  // odśwież konie wybranej stajni
+        }
+
+        stableTable.refresh();
+        horseTable.refresh();
+    }
+
+
+    @FXML
+    public void loadData() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Load data");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Binary file", "*.dat"));
+
+        File file = fc.showOpenDialog(null);
+        if (file == null) return;
+
+        List<Stable> loaded = Serializer.loadFromFile(file);
+        if (loaded != null) {
+            // UWAGA: to już zwykłe POJO, a nie encje!
+            // Możemy je teraz zapisać do bazy:
+            for (Stable s : loaded) {
+                stableDAO.save(s);
+            }
+            refreshTables();
+        }
+    }
+
 }

@@ -3,11 +3,13 @@ package com.example.koniary.model;
 import com.example.koniary.exceptions.InvalidHorseDataException;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "horses")
-public class Horse implements Comparable<Horse> {
-
+public class Horse implements Comparable<Horse>, Serializable {
+    private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // <-- jedyny nowy field
