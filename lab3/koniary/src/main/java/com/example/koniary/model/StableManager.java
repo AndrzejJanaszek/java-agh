@@ -94,10 +94,6 @@ public class StableManager {
 
     public void loadDefaultData() {
 
-        // Jeśli chcesz — TU możesz zrobić insert defaultowych danych do bazy.
-        // Ale NIE w pamięci!
-        // To jest tylko przykład prostych danych startowych:
-
         if (!stableDAO.getAll().isEmpty()) return; // nie dodawaj duplikatów
 
         try {

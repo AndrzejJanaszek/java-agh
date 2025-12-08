@@ -16,16 +16,12 @@ public class LoginController {
     @FXML
     public void loginAsAdmin() {
         SceneManager.switchScene("admin-view.fxml", controller -> {
-            // Brak potrzeby przekazywania czegokolwiek
-            // AdminController sam korzysta z DAO
         });
     }
 
     @FXML
     public void loginAsUser() {
         SceneManager.switchScene("user-view.fxml", controller -> {
-            // Brak potrzeby przekazywania czegokolwiek
-            // UserController sam korzysta z DAO
         });
     }
 }

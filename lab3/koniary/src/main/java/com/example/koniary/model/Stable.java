@@ -13,7 +13,7 @@ public class Stable implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // klucz główny wymagany przez Hibernate
+    private Long id;
 
     private String stableName;
     private int maxCapacity;
@@ -22,7 +22,6 @@ public class Stable implements Serializable {
     private List<Horse> horseList;
 
     public Stable() {
-        // wymagany pusty konstruktor dla Hibernate
     }
 
     public Stable(String stableName, int maxCapacity) {

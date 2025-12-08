@@ -34,7 +34,6 @@ public class Horse implements Comparable<Horse>, Serializable {
     // --- PUSTY KONSTRUKTOR DLA HIBERNATE ---
     public Horse() {}
 
-    // --- TWÓJ ORYGINALNY KONSTRUKTOR Z WALIDACJĄ (NIE ZMNIENIAM ANI ZNAKU!) ---
     public Horse(String name, String breed, HorseType type, HorseCondition condition,
                  int age, double price, double weight) throws InvalidHorseDataException {
 
