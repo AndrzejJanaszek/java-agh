@@ -3,6 +3,7 @@ package com.example.koniary.controllers;
 import com.example.koniary.HibernateUtil;
 import com.example.koniary.exceptions.*;
 import com.example.koniary.model.*;
+import com.example.koniary.services.CSVService;
 import com.example.koniary.services.HorseDAO;
 import com.example.koniary.services.Serializer;
 import com.example.koniary.services.StableDAO;
@@ -486,6 +487,42 @@ public class AdminController {
                 stableDAO.save(s);
             }
             refreshTables();
+        }
+    }
+
+    @FXML
+    public void showHorseCount() {
+        List<Object[]> results = stableDAO.getHorseCountPerStable();
+
+        StringBuilder sb = new StringBuilder("Liczba koni w każdej stajni:\n\n");
+
+        for (Object[] row : results) {
+            String name = (String) row[0];
+            Long count = (Long) row[1];
+            sb.append(name).append(": ").append(count).append("\n");
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Horse Count");
+        alert.setHeaderText("Ilość koni w każdej stajni");
+        alert.setContentText(sb.toString());
+        alert.showAndWait();
+    }
+
+    @FXML
+    public void exportCSV() {
+        Stable stable = stableTable.getSelectionModel().getSelectedItem();
+        if (stable == null) {
+            showError("Wybierz stajnię!");
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Zapisz CSV");
+
+        File f = fc.showSaveDialog(null);
+        if (f != null) {
+            CSVService.exportStableToCSV(stable, f, horseDAO);
         }
     }
 

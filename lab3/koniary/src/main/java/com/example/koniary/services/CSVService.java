@@ -110,4 +110,57 @@ public class CSVService {
             em.close();
         }
     }
+    public static void exportStableToCSV(Stable stable, File file, HorseDAO horseDAO) {
+        try (PrintWriter pw = new PrintWriter(file)) {
+
+            pw.println("name,breed,age,weight,price,status");
+
+            List<Horse> horses = horseDAO.findByStableId(stable.getId());
+
+            for (Horse h : horses) {
+                pw.println(
+                        h.getName() + "," +
+                                h.getBreed() + "," +
+                                h.getAge() + "," +
+                                h.getWeight() + "," +
+                                h.getPrice() + "," +
+                                h.getStatus()
+                );
+            }
+
+            System.out.println("Zapisano CSV: " + file.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void importStableFromCSV(Stable stable, File file, HorseDAO horseDAO) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+            String line = br.readLine(); // pomiń nagłówek
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(",");
+
+                Horse h = new Horse(
+                        data[0],           // name
+                        data[1],           // breed
+                        HorseType.valueOf(data[5]), // ??? zależnie od formatu
+                        HorseCondition.valueOf(data[5]),
+                        Integer.parseInt(data[2]),
+                        Double.parseDouble(data[4]),
+                        Double.parseDouble(data[3])
+                );
+
+                h.setStable(stable);
+                horseDAO.save(h);
+            }
+
+            System.out.println("Wczytano dane z CSV: " + file.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

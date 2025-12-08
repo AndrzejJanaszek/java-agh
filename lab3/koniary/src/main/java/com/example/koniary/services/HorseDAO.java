@@ -57,4 +57,19 @@ public class HorseDAO {
         em.close();
         return list;
     }
+
+    public List<Horse> findByStableId(Long stableId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT h FROM Horse h WHERE h.stable.id = :id",
+                            Horse.class
+                    )
+                    .setParameter("id", stableId)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
 }

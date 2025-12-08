@@ -62,11 +62,16 @@
             <HBox spacing="10">
                 <Button text="Add Horse" onAction="#addHorse" />
                 <Button text="Remove Horse" onAction="#removeHorse" />
+
+
+                <Button text="Save to .dat" onAction="#saveData"/>
+                <Button text="Load from .dat" onAction="#loadData"/>
+                <Button text="Show Horse Count" onAction="#showHorseCount"/>
+                <Button text="Export CSV" onAction="#exportCSV"/>
             </HBox>
         </VBox>
     </center>
 
-    <Button text="Save to .dat" onAction="#saveData"/>
-    <Button text="Load from .dat" onAction="#loadData"/>
+
 
 </BorderPane>

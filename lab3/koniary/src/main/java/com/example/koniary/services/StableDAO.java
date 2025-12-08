@@ -4,6 +4,7 @@ import com.example.koniary.model.Stable;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.criteria.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,4 +75,29 @@ public class StableDAO {
         em.close();
         return list;
     }
+
+    public List<Object[]> getHorseCountPerStable() {
+        EntityManager em = emf.createEntityManager();
+        try {
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+
+            // SELECT s.name, COUNT(h)
+            CriteriaQuery<Object[]> cq = cb.createQuery(Object[].class);
+            Root<Stable> stableRoot = cq.from(Stable.class);
+            Join<Object, Object> horsesJoin = stableRoot.join("horseList", JoinType.LEFT);
+
+            cq.multiselect(
+                    stableRoot.get("stableName"),
+                    cb.count(horsesJoin)
+            );
+
+            cq.groupBy(stableRoot.get("stableName"));
+
+            return em.createQuery(cq).getResultList();
+
+        } finally {
+            em.close();
+        }
+    }
+
 }
