@@ -2,6 +2,8 @@ package com.example.koniary.controllers;
 
 import com.example.koniary.exceptions.*;
 import com.example.koniary.model.*;
+import com.example.koniary.services.HorseDAO;
+import com.example.koniary.services.StableDAO;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,7 +18,9 @@ import java.util.List;
 
 public class AdminController {
 
-    private StableManager stableManager;
+    // === DAO ZAMIAST StableManager ===
+    private final StableDAO stableDAO = new StableDAO();
+    private final HorseDAO horseDAO = new HorseDAO();
 
     // TABLES
     @FXML private TableView<Stable> stableTable;
@@ -37,7 +41,6 @@ public class AdminController {
     @FXML private ComboBox<HorseCondition> conditionCombo;
 
     // DATA
-
     private final ObservableList<Horse> horses = FXCollections.observableArrayList();
     private final ObservableList<Stable> stables = FXCollections.observableArrayList();
 
@@ -46,7 +49,7 @@ public class AdminController {
         setupStableTable();
         setupHorseTable();
         setupListeners();
-        loadDummyData(); // test UI
+        loadDummyData(); // test data into DB
 
         stableTable.setEditable(true);
         horseTable.setEditable(true);
@@ -61,21 +64,13 @@ public class AdminController {
         colStableLoad.setCellValueFactory(c ->
                 new SimpleIntegerProperty(c.getValue().getHorseList().size()).asObject());
 
-        // ==== MAKE COLUMNS EDITABLE ====
+        // ==== EDITABLE ====
         colStableName.setCellFactory(TextFieldTableCell.forTableColumn());
         colStableName.setOnEditCommit(event -> {
             Stable stable = event.getRowValue();
-            String oldName = stable.getStableName();
-            String newName = event.getNewValue();
-
-            // aktualizujemy obiekt
-            stable.setStableName(newName);
-
-            // aktualizujemy mapę
-            stableManager.getStables().remove(oldName);
-            stableManager.getStables().put(newName, stable);
-
-            stables.setAll(stableManager.getStables().values());
+            stable.setStableName(event.getNewValue());
+            stableDAO.update(stable);
+            stables.setAll(stableDAO.findAll());
             stableTable.refresh();
         });
 
@@ -83,6 +78,7 @@ public class AdminController {
         colStableCapacity.setOnEditCommit(event -> {
             Stable stable = event.getRowValue();
             stable.setMaxCapacity(event.getNewValue());
+            stableDAO.update(stable);
             stableTable.refresh();
         });
 
@@ -104,12 +100,13 @@ public class AdminController {
         colHorseStatus.setCellValueFactory(c ->
                 new SimpleObjectProperty<>(c.getValue().getStatus()));
 
-        // ==== MAKE COLUMNS EDITABLE ====
+        // ==== EDITABLE ====
 
         colHorseName.setCellFactory(TextFieldTableCell.forTableColumn());
         colHorseName.setOnEditCommit(event -> {
             Horse h = event.getRowValue();
             h.setName(event.getNewValue());
+            horseDAO.update(h);
             horseTable.refresh();
         });
 
@@ -117,6 +114,7 @@ public class AdminController {
         colHorseBreed.setOnEditCommit(event -> {
             Horse h = event.getRowValue();
             h.setBreed(event.getNewValue());
+            horseDAO.update(h);
             horseTable.refresh();
         });
 
@@ -124,6 +122,7 @@ public class AdminController {
         colHorseAge.setOnEditCommit(event -> {
             Horse h = event.getRowValue();
             h.setAge(event.getNewValue());
+            horseDAO.update(h);
             horseTable.refresh();
         });
 
@@ -131,6 +130,7 @@ public class AdminController {
         colHorseWeight.setOnEditCommit(event -> {
             Horse h = event.getRowValue();
             h.setWeight(event.getNewValue());
+            horseDAO.update(h);
             horseTable.refresh();
         });
 
@@ -138,42 +138,40 @@ public class AdminController {
         colHorsePrice.setOnEditCommit(event -> {
             Horse h = event.getRowValue();
             h.setPrice(event.getNewValue());
+            horseDAO.update(h);
             horseTable.refresh();
         });
 
-        // === STATUS AS DROPDOWN ===
-        colHorseStatus.setCellFactory(col -> {
-            return new TableCell<>() {
-                private final ComboBox<HorseCondition> combo = new ComboBox<>(
-                        FXCollections.observableArrayList(HorseCondition.values())
-                );
-                {
-                    combo.valueProperty().addListener((obs, oldVal, newVal) -> {
-                        if (getTableRow().getItem() != null) {
-                            getTableRow().getItem().setStatus(newVal);
-                        }
-                    });
-                }
+        // === STATUS DROPDOWN ===
+        colHorseStatus.setCellFactory(col -> new TableCell<>() {
+            private final ComboBox<HorseCondition> combo =
+                    new ComboBox<>(FXCollections.observableArrayList(HorseCondition.values()));
 
-                @Override
-                protected void updateItem(HorseCondition status, boolean empty) {
-                    super.updateItem(status, empty);
-                    if (empty) {
-                        setGraphic(null);
-                    } else {
-                        combo.setValue(status);
-                        setGraphic(combo);
+            {
+                combo.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    if (getTableRow().getItem() != null) {
+                        Horse h = getTableRow().getItem();
+                        h.setStatus(newVal);
+                        horseDAO.update(h);
                     }
+                });
+            }
+
+            @Override
+            protected void updateItem(HorseCondition status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty) setGraphic(null);
+                else {
+                    combo.setValue(status);
+                    setGraphic(combo);
                 }
-            };
+            }
         });
 
         horseTable.setItems(horses);
     }
 
-
     private void setupListeners() {
-        // Po kliknięciu stajni — wyświetl konie
         stableTable.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
             if (selected != null) {
                 horses.setAll(selected.getHorseList());
@@ -181,19 +179,20 @@ public class AdminController {
         });
     }
 
-
-    // TEMPORARY DATA FOR TESTING UI
+    // LOAD TEST DATA INTO DB ON START
     private void loadDummyData() {
+        if (!stableDAO.findAll().isEmpty()) {
+            stables.setAll(stableDAO.findAll());
+            return; // don't recreate data if DB already has some
+        }
 
         try {
-            // ------ Stadnina 1 ------
             Stable s1 = new Stable("Stadnina Jednorożców", 8);
             s1.addHorse(new Horse("Błyskotek", "Jednorożec Górski", HorseType.HOT_BLOODED,
                     HorseCondition.HEALTHY, 120, 20000, 380));
             s1.addHorse(new Horse("Pastelozaur", "Jednorożec Pastelowy", HorseType.HOT_BLOODED,
                     HorseCondition.TRAINING, 45, 18000, 350));
 
-            // ------ Stadnina 2 ------
             Stable s2 = new Stable("Wiedźmińska Zagroda", 12);
             s2.addHorse(new Horse("Płotka", "Koń Geralta", HorseType.COLD_BLOODED,
                     HorseCondition.HEALTHY, 7, 5000, 420));
@@ -202,43 +201,36 @@ public class AdminController {
             s2.addHorse(new Horse("Bucefał", "Koń Nilfgaardzki", HorseType.HOT_BLOODED,
                     HorseCondition.TRAINING, 6, 5200, 460));
 
-            // ------ Stadnina 3 ------
             Stable s3 = new Stable("Zagroda Podlaska", 6);
             s3.addHorse(new Horse("Zenek", "Koń Disco Polo", HorseType.COLD_BLOODED,
                     HorseCondition.HEALTHY, 4, 3000, 500));
             s3.addHorse(new Horse("Klarynek", "Koń Podlaski", HorseType.COLD_BLOODED,
                     HorseCondition.QUARANTINE, 5, 2500, 550));
 
-            // ------ Stadnina 4 ------
             Stable s4 = new Stable("Stajnia Konia Płotki", 4);
             s4.addHorse(new Horse("Płotka 2.0", "Koń Mutant", HorseType.HOT_BLOODED,
                     HorseCondition.TRAINING, 3, 7000, 390));
             s4.addHorse(new Horse("Bugowóz", "Koń, który przenika przez ściany", HorseType.HOT_BLOODED,
                     HorseCondition.HEALTHY, 2, 9999, 300));
 
-            // ------ Stadnina 5 ------
             Stable s5 = new Stable("Koński Raj Mordoru", 10);
             s5.addHorse(new Horse("Ognik", "Koń Ognisty", HorseType.HOT_BLOODED,
                     HorseCondition.HEALTHY, 12, 8000, 610));
             s5.addHorse(new Horse("Czarny Jeździec", "Rumak Nazgula", HorseType.HOT_BLOODED,
                     HorseCondition.SICK, 100, 15000, 700));
 
-            // ----- Wstawienie -----
-            stables.setAll(s1, s2, s3, s4, s5);
+            stableDAO.save(s1);
+            stableDAO.save(s2);
+            stableDAO.save(s3);
+            stableDAO.save(s4);
+            stableDAO.save(s5);
 
-        } catch (InvalidHorseDataException |
-                 StableFullException e) {
+            stables.setAll(stableDAO.findAll());
+
+        } catch (Exception e) {
             System.err.println("Błąd przy ładowaniu danych testowych: " + e.getMessage());
         }
     }
-
-
-
-    public void setStableManager(StableManager manager) {
-        this.stableManager = manager;
-        stables.setAll(manager.getStables().values());  // pobieramy List<Stable>
-    }
-
 
     /* ============================================
      * ADD STABLE
@@ -265,17 +257,11 @@ public class AdminController {
             return;
         }
 
-        // UWAGA: tutaj korzystamy z managera
-        try {
-            stableManager.addStable(name, cap);
-        } catch (StableAlreadyExistsException e) {
-            showError("Taka stajnia już istnieje: " + name);
-        }
+        Stable stable = new Stable(name, cap);
+        stableDAO.save(stable);
 
-
-        stables.setAll(stableManager.getStables().values());
+        stables.setAll(stableDAO.findAll());
     }
-
 
     /* ============================================
      * REMOVE STABLE
@@ -289,24 +275,18 @@ public class AdminController {
             return;
         }
 
-        // removeStable przyjmuje nazwę!
-        try {
-            stableManager.removeStable(selected.getStableName());
-        } catch (StableNotFoundException e) {
-            showError("Nie znaleziono stajni: " + e.getMessage());
-        }
+        stableDAO.delete(selected);
 
-        stables.setAll(stableManager.getStables().values());
+        stables.setAll(stableDAO.findAll());
         horses.clear();
     }
-
 
     /* ============================================
      * SORT STABLES BY LOAD
      * ============================================ */
     @FXML
     public void sortStables() {
-        List<Stable> sorted = stableManager.getStables().values().stream()
+        List<Stable> sorted = stableDAO.findAll().stream()
                 .sorted(Comparator.comparingInt(s -> s.getHorseList().size()))
                 .toList();
 
@@ -366,7 +346,6 @@ public class AdminController {
 
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK) {
-
                 try {
                     return new Horse(
                             nameField.getText(),
@@ -394,10 +373,7 @@ public class AdminController {
             showError("Stajnia jest pełna: " + e.getMessage());
         }
 
-
-        // refresh UI
-        horses.setAll(selectedStable.getHorseList());
-        stableTable.refresh();
+        stableDAO.update(selectedStable);
 
         horses.setAll(selectedStable.getHorseList());
         stableTable.refresh();
@@ -422,6 +398,7 @@ public class AdminController {
         }
 
         selectedStable.removeHorse(selectedHorse);
+        stableDAO.update(selectedStable);
 
         horses.setAll(selectedStable.getHorseList());
         stableTable.refresh();
@@ -452,7 +429,7 @@ public class AdminController {
     }
 
     /* ============================================
-     * HELPER – SHOW ERROR POPUP
+     * SHOW ERROR POPUP
      * ============================================ */
     private void showError(String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);

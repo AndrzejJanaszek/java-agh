@@ -1,6 +1,8 @@
 package com.example.koniary.controllers;
 
 import com.example.koniary.model.*;
+import com.example.koniary.services.HorseDAO;
+import com.example.koniary.services.StableDAO;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,7 +14,9 @@ import java.util.List;
 
 public class UserController {
 
-    private StableManager stableManager;
+    // === DAO zamiast StableManager ===
+    private final StableDAO stableDAO = new StableDAO();
+    private final HorseDAO horseDAO = new HorseDAO();
 
     // TABLES
     @FXML private TableView<Stable> stableTable;
@@ -40,11 +44,9 @@ public class UserController {
         setupStableTable();
         setupHorseTable();
         setupListeners();
-    }
 
-    public void setStableManager(StableManager manager) {
-        this.stableManager = manager;
-        stables.setAll(manager.getStables().values());
+        // Wczytanie danych z bazy
+        stables.setAll(stableDAO.findAll());
     }
 
     private void setupStableTable() {

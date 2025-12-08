@@ -2,15 +2,37 @@ package com.example.koniary.model;
 
 import com.example.koniary.exceptions.InvalidHorseDataException;
 
+import javax.persistence.*;
+
+@Entity
+@Table(name = "horses")
 public class Horse implements Comparable<Horse> {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // <-- jedyny nowy field
+
     private String name;
     private String breed;
-    private HorseType type; // np. enum: COLD_BLOODED, HOT_BLOODED
+
+    @Enumerated(EnumType.STRING)
+    private HorseType type;
+
+    @Enumerated(EnumType.STRING)
     private HorseCondition status;
+
     private int age;
     private double price;
     private double weight;
 
+    @ManyToOne
+    @JoinColumn(name = "stable_id")
+    private Stable stable;
+
+    // --- PUSTY KONSTRUKTOR DLA HIBERNATE ---
+    public Horse() {}
+
+    // --- TWÓJ ORYGINALNY KONSTRUKTOR Z WALIDACJĄ (NIE ZMNIENIAM ANI ZNAKU!) ---
     public Horse(String name, String breed, HorseType type, HorseCondition condition,
                  int age, double price, double weight) throws InvalidHorseDataException {
 
@@ -23,12 +45,11 @@ public class Horse implements Comparable<Horse> {
         this.name = name;
         this.breed = breed;
         this.type = type;
-        this.status = condition; // <============================== POPRAWKA
+        this.status = condition;
         this.age = age;
         this.price = price;
         this.weight = weight;
     }
-
 
     public void print() {
         System.out.printf("%s (%s, %s) - %d lat, %.2f zł, %.1f kg, status: %s%n",
@@ -47,6 +68,13 @@ public class Horse implements Comparable<Horse> {
     }
 
     /* --- GETTERY & SETTER --- */
+    public Stable getStable() {
+        return stable;
+    }
+
+    public void setStable(Stable stable) {
+        this.stable = stable;
+    }
 
     public String getName() {
         return name;

@@ -1,6 +1,5 @@
 package com.example.koniary;
 
-import com.example.koniary.model.StableManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -8,17 +7,8 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    private static final StableManager stableManager = new StableManager();
-
-    public static StableManager getStableManager() {
-        return stableManager;
-    }
-
     @Override
     public void start(Stage stage) throws Exception {
-
-        stableManager.loadDefaultData(); // domyślne dane
-
         SceneManager.init(stage);
 
         FXMLLoader loader = new FXMLLoader(Main.class.getResource("login-view.fxml"));
@@ -28,7 +18,9 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        var emf = HibernateUtil.getEntityManagerFactory();
+        System.out.println("Hibernate działa! EMF = " + emf);
+
         launch();
     }
 }
-
