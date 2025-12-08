@@ -19,7 +19,7 @@ public class StableDAO {
     public void save(Stable stable) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        em.persist(stable);
+        em.merge(stable);
         em.getTransaction().commit();
         em.close();
     }
