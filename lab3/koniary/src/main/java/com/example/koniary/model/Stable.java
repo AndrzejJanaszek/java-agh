@@ -16,8 +16,8 @@ public class Stable {
     private String stableName;
     private int maxCapacity;
 
-    @OneToMany(mappedBy = "stable", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Horse> horseList = new ArrayList<>();
+    @OneToMany(mappedBy = "stable", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Horse> horseList;
 
     public Stable() {
         // wymagany pusty konstruktor dla Hibernate

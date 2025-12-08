@@ -1,5 +1,6 @@
 package com.example.koniary.controllers;
 
+import com.example.koniary.HibernateUtil;
 import com.example.koniary.exceptions.*;
 import com.example.koniary.model.*;
 import com.example.koniary.services.HorseDAO;
@@ -12,6 +13,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.GridPane;
+import javafx.util.converter.IntegerStringConverter;
 
 import java.util.Comparator;
 import java.util.List;
@@ -19,8 +21,8 @@ import java.util.List;
 public class AdminController {
 
     // === DAO ZAMIAST StableManager ===
-    private final StableDAO stableDAO = new StableDAO();
-    private final HorseDAO horseDAO = new HorseDAO();
+    private final StableDAO stableDAO = new StableDAO(HibernateUtil.getEntityManagerFactory());
+    private final HorseDAO horseDAO = new HorseDAO(HibernateUtil.getEntityManagerFactory());
 
     // TABLES
     @FXML private TableView<Stable> stableTable;
@@ -70,11 +72,11 @@ public class AdminController {
             Stable stable = event.getRowValue();
             stable.setStableName(event.getNewValue());
             stableDAO.update(stable);
-            stables.setAll(stableDAO.findAll());
+            stables.setAll(stableDAO.getAll());
             stableTable.refresh();
         });
 
-        colStableCapacity.setCellFactory(TextFieldTableCell.forTableColumn(new javafx.util.converter.IntegerStringConverter()));
+        colStableCapacity.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         colStableCapacity.setOnEditCommit(event -> {
             Stable stable = event.getRowValue();
             stable.setMaxCapacity(event.getNewValue());
@@ -181,8 +183,8 @@ public class AdminController {
 
     // LOAD TEST DATA INTO DB ON START
     private void loadDummyData() {
-        if (!stableDAO.findAll().isEmpty()) {
-            stables.setAll(stableDAO.findAll());
+        if (!stableDAO.getAll().isEmpty()) {
+            stables.setAll(stableDAO.getAll());
             return; // don't recreate data if DB already has some
         }
 
@@ -225,7 +227,7 @@ public class AdminController {
             stableDAO.save(s4);
             stableDAO.save(s5);
 
-            stables.setAll(stableDAO.findAll());
+            stables.setAll(stableDAO.getAll());
 
         } catch (Exception e) {
             System.err.println("Błąd przy ładowaniu danych testowych: " + e.getMessage());
@@ -260,7 +262,7 @@ public class AdminController {
         Stable stable = new Stable(name, cap);
         stableDAO.save(stable);
 
-        stables.setAll(stableDAO.findAll());
+        stables.setAll(stableDAO.getAll());
     }
 
     /* ============================================
@@ -277,7 +279,7 @@ public class AdminController {
 
         stableDAO.delete(selected);
 
-        stables.setAll(stableDAO.findAll());
+        stables.setAll(stableDAO.getAll());
         horses.clear();
     }
 
@@ -286,7 +288,7 @@ public class AdminController {
      * ============================================ */
     @FXML
     public void sortStables() {
-        List<Stable> sorted = stableDAO.findAll().stream()
+        List<Stable> sorted = stableDAO.getAll().stream()
                 .sorted(Comparator.comparingInt(s -> s.getHorseList().size()))
                 .toList();
 

@@ -52,6 +52,12 @@
                 </columns>
             </TableView>
 
+            <!-- NOWY PRZYCISK DO DODAWANIA OCEN -->
+            <Button text="Add Rating" onAction="#addRating"/>
+
+            <Button text="Show Ratings" onAction="#showRatings"/>
+
+
         </VBox>
     </center>
 

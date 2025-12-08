@@ -1,94 +1,116 @@
 package com.example.koniary.model;
 
 import com.example.koniary.exceptions.*;
+import com.example.koniary.services.HorseDAO;
+import com.example.koniary.services.StableDAO;
 
-import java.util.*;
+import javax.persistence.EntityManagerFactory;
+import java.util.List;
+import java.util.Optional;
 
 public class StableManager {
-    private Map<String, Stable> stables = new HashMap<>();
+    private final StableDAO stableDAO;
+    private final HorseDAO horseDAO;
+
+    public StableManager(EntityManagerFactory emf) {
+        this.stableDAO = new StableDAO(emf);
+        this.horseDAO = new HorseDAO(emf);
+    }
+
+    /* =====================================================
+     *  STABLE OPERATIONS
+     * ===================================================== */
 
     public void addStable(String name, int capacity) throws StableAlreadyExistsException {
-        if (stables.containsKey(name)) {
+        if (stableDAO.findByName(name).isPresent()) {
             throw new StableAlreadyExistsException("Stajnia \"" + name + "\" już istnieje!");
         }
-        stables.put(name, new Stable(name, capacity));
+
+        Stable stable = new Stable(name, capacity);
+        stableDAO.save(stable);
     }
 
     public void removeStable(String name) throws StableNotFoundException {
-        if (!stables.containsKey(name)) {
-            throw new StableNotFoundException("Stajnia \"" + name + "\" nie istnieje!");
+        Optional<Stable> found = stableDAO.findByName(name);
+        if (found.isEmpty()) {
+            throw new StableNotFoundException("Nie znaleziono stajni: " + name);
         }
-        stables.remove(name);
+
+        stableDAO.delete(found.get());
     }
 
-    public List<Stable> findEmpty() {
-        return stables.values().stream().filter(Stable::isEmpty).toList();
-    }
-
-    public void summary() {
-        stables.forEach((name, stable) -> {
-            double fill = (double) stable.sortByName().size() / stable.getMaxCapacity() * 100;
-            System.out.printf("%s – zapełnienie: %.1f%%%n", name, fill);
-        });
+    public List<Stable> getAllStables() {
+        return stableDAO.getAll();
     }
 
     public Optional<Stable> search(String name) {
-        return Optional.ofNullable(stables.get(name));
+        return stableDAO.findByName(name);
     }
 
     public List<Stable> searchPartial(String fragment) {
-        return stables.entrySet().stream()
-                .filter(e -> e.getKey().toLowerCase().contains(fragment.toLowerCase()))
-                .map(Map.Entry::getValue)
-                .toList();
+        return stableDAO.searchByNameFragment(fragment);
     }
 
-    public Map<String, Stable> getStables() {
-        return stables;
+
+    /* =====================================================
+     *  HORSE OPERATIONS
+     * ===================================================== */
+
+    public void addHorseToStable(Long stableId, Horse horse)
+            throws StableNotFoundException, StableFullException, HorseAlreadyExistsException {
+
+        Stable stable = stableDAO.findById(stableId)
+                .orElseThrow(() -> new StableNotFoundException("Stajnia o ID " + stableId + " nie istnieje"));
+
+        // Walidacja pojemności
+        if (stable.getHorseList().size() >= stable.getMaxCapacity()) {
+            throw new StableFullException("Stajnia \"" + stable.getStableName() + "\" jest pełna!");
+        }
+
+        // Sprawdzenie duplikatu
+        boolean exists = stable.getHorseList().stream()
+                .anyMatch(h -> h.getName().equalsIgnoreCase(horse.getName()));
+
+        if (exists) {
+            throw new HorseAlreadyExistsException("Koń o imieniu " + horse.getName() + " już istnieje w tej stajni!");
+        }
+
+        // Połączenie
+        stable.addHorse(horse);
+
+        stableDAO.update(stable);
     }
+
+    public void removeHorse(Long horseId) throws HorseNotFoundException {
+        Horse horse = horseDAO.findById(horseId)
+                .orElseThrow(() -> new HorseNotFoundException("Koń o ID " + horseId + " nie istnieje"));
+
+        horseDAO.delete(horse);
+    }
+
+    /* =====================================================
+     *  DEFAULT DATA INITIALIZER
+     * ===================================================== */
 
     public void loadDefaultData() {
 
+        // Jeśli chcesz — TU możesz zrobić insert defaultowych danych do bazy.
+        // Ale NIE w pamięci!
+        // To jest tylko przykład prostych danych startowych:
+
+        if (!stableDAO.getAll().isEmpty()) return; // nie dodawaj duplikatów
+
         try {
-            // ------ Stadnina 1 ------
             Stable s1 = new Stable("Stadnina Jednorożców", 8);
-            s1.addHorse(new Horse("Błyskotek", "Jednorożec Górski", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 120, 20000, 380));
-            s1.addHorse(new Horse("Pastelozaur", "Jednorożec Pastelowy", HorseType.HOT_BLOODED, HorseCondition.TRAINING, 45, 18000, 350));
-
-            // ------ Stadnina 2 ------
             Stable s2 = new Stable("Wiedźmińska Zagroda", 12);
-            s2.addHorse(new Horse("Płotka", "Koń Geralta", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 7, 5000, 420));
-            s2.addHorse(new Horse("Kasztanek", "Koń Temerski", HorseType.COLD_BLOODED, HorseCondition.SICK, 10, 2400, 480));
-            s2.addHorse(new Horse("Bucefał", "Koń Nilfgaardzki", HorseType.HOT_BLOODED, HorseCondition.TRAINING, 6, 5200, 460));
-
-            // ------ Stadnina 3 ------
             Stable s3 = new Stable("Zagroda Podlaska", 6);
-            s3.addHorse(new Horse("Zenek", "Koń Disco Polo", HorseType.COLD_BLOODED, HorseCondition.HEALTHY, 4, 3000, 500));
-            s3.addHorse(new Horse("Klarynek", "Koń Podlaski", HorseType.COLD_BLOODED, HorseCondition.QUARANTINE, 5, 2500, 550));
 
-            // ------ Stadnina 4 ------
-            Stable s4 = new Stable("Stajnia Konia Płotki", 4);
-            s4.addHorse(new Horse("Płotka 2.0", "Koń Mutant", HorseType.HOT_BLOODED, HorseCondition.TRAINING, 3, 7000, 390));
-            s4.addHorse(new Horse("Bugowóz", "Koń, który przenika przez ściany", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 2, 9999, 300));
+            stableDAO.save(s1);
+            stableDAO.save(s2);
+            stableDAO.save(s3);
 
-            // ------ Stadnina 5 ------
-            Stable s5 = new Stable("Koński Raj Mordoru", 10);
-            s5.addHorse(new Horse("Ognik", "Koń Ognisty", HorseType.HOT_BLOODED, HorseCondition.HEALTHY, 12, 8000, 610));
-            s5.addHorse(new Horse("Czarny Jeździec", "Rumak Nazgula", HorseType.HOT_BLOODED, HorseCondition.SICK, 100, 15000, 700));
-
-            // Wstawienie do mapy
-            stables.put(s1.getStableName(), s1);
-            stables.put(s2.getStableName(), s2);
-            stables.put(s3.getStableName(), s3);
-            stables.put(s4.getStableName(), s4);
-            stables.put(s5.getStableName(), s5);
-
-        } catch (StableFullException e) {
-            System.err.println("Błąd: stajnia pełna – " + e.getMessage());
-        } catch (InvalidHorseDataException e) {
-            System.err.println("Błąd: nieprawidłowe dane konia – " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Błąd inicjalizacji danych: " + e.getMessage());
         }
     }
-
-
 }

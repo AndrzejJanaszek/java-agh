@@ -68,6 +68,10 @@ public class Horse implements Comparable<Horse> {
     }
 
     /* --- GETTERY & SETTER --- */
+    public Long getId() {
+        return id;
+    }
+
     public Stable getStable() {
         return stable;
     }
