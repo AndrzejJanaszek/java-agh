@@ -31,6 +31,15 @@ public class HorseService {
     }
 
     public void addHorse(HorseRequest request) {
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new BadRequestException("Horse name is required");
+        }
+
+        if (request.getStableId() == null) {
+            throw new BadRequestException("Stable id is required");
+        }
+
         if (request.getAge() < 0) {
             throw new BadRequestException("Age cannot be negative");
         }
