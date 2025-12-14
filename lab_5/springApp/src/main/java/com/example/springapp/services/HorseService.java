@@ -101,4 +101,19 @@ public class HorseService {
         rating.setHorse(horse);
         ratingRepository.save(rating);
     }
+
+    public Horse getHorse(Long id) {
+        return horseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Horse not found"));
+    }
+
+    public List<Horse> getAllHorses() {
+        List<Horse> horses = horseRepository.findAll();
+
+        if (horses.isEmpty()) {
+            throw new NotFoundException("No horses found");
+        }
+
+        return horses;
+    }
 }
